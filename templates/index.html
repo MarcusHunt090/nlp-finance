@@ -212,6 +212,7 @@
                         <input type="url" id="url-input" placeholder="https://www.reuters.com/..."
                             style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-size:0.9rem;outline:none;"
                             onkeydown="if(event.key==='Enter') analyzeUrl()">
+                        <button class="btn-secondary" onclick="document.getElementById('url-input').value='';document.getElementById('url-input').focus();" title="Clear">✕</button>
                         <button id="url-analyze-btn" class="btn-primary" onclick="analyzeUrl()">
                             <span id="url-btn-text">Analyze Article</span>
                             <span id="url-btn-spinner" class="spinner hidden"></span>
@@ -235,10 +236,13 @@
                     <textarea id="text-input" style="margin-top:14px;" placeholder="Enter a financial article, headline, or paragraph…"></textarea>
                     <div class="input-footer">
                         <span class="hint-text">Shift+Enter for new line · Enter to submit</span>
-                        <button id="analyze-btn" class="btn-primary" onclick="analyzeText()">
-                            <span id="btn-text">Analyze</span>
-                            <span id="btn-spinner" class="spinner hidden"></span>
-                        </button>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn-secondary" onclick="document.getElementById('text-input').value='';document.getElementById('text-input').focus();">✕ Clear</button>
+                            <button id="analyze-btn" class="btn-primary" onclick="analyzeText()">
+                                <span id="btn-text">Analyze</span>
+                                <span id="btn-spinner" class="spinner hidden"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
