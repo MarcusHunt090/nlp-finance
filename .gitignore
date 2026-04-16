@@ -14,10 +14,10 @@ venv/
 env/
 .venv/
 
-# Data files (too large for git)
-data/*.csv
+# Data files (too large for git — except training data needed for deployment)
 data/*.pkl
 data/*.parquet
+data/finsentiment.db
 
 # Model weights / cache
 *.pt
