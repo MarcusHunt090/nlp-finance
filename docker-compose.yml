@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  finsentiment:
+    build: .
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/app/data   # Persist SQLite DB and CSV data
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped

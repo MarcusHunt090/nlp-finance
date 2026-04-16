@@ -1,0 +1,68 @@
+[
+  {
+    "text": "Tesla stock drops after disappointing earnings report",
+    "ensemble_label": "positive",
+    "timestamp": "2026-04-13T17:20:21.690054",
+    "entities": [
+      {
+        "ticker": "TSLA",
+        "name": "Tesla",
+        "type": "company"
+      }
+    ]
+  },
+  {
+    "text": "Apple stock surges after strong quarterly earnings beat expectations",
+    "ensemble_label": "positive",
+    "timestamp": "2026-04-13T17:20:41.537279",
+    "entities": [
+      {
+        "ticker": "AAPL",
+        "name": "Apple",
+        "type": "company"
+      }
+    ]
+  },
+  {
+    "text": "Tesla announces massive layoffs following revenue decline",
+    "ensemble_label": "negative",
+    "timestamp": "2026-04-13T17:24:16.226005",
+    "entities": [
+      {
+        "ticker": "TSLA",
+        "name": "Tesla",
+        "type": "company"
+      }
+    ]
+  },
+  {
+    "text": "Tesla stock crashes after weak earnings and massive layoffs",
+    "ensemble_label": "positive",
+    "timestamp": "2026-04-13T22:47:12.513345",
+    "entities": [
+      {
+        "ticker": "TSLA",
+        "name": "Tesla",
+        "type": "company"
+      }
+    ]
+  },
+  {
+    "text": "Oil prices drop sharply amid global recession fears",
+    "ensemble_label": "negative",
+    "timestamp": "2026-04-13T22:49:36.928748",
+    "entities": []
+  },
+  {
+    "text": "Markets remain flat as investors await economic data",
+    "ensemble_label": "neutral",
+    "timestamp": "2026-04-13T22:49:39.030814",
+    "entities": []
+  },
+  {
+    "text": "Federal Reserve holds interest rates steady as expected",
+    "ensemble_label": "neutral",
+    "timestamp": "2026-04-13T22:49:41.069942",
+    "entities": []
+  }
+]

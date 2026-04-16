@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSentiment — NLP Financial Sentiment Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ======================================================== APP SHELL -->
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">▲</div>
+            <span class="logo-text">FinSentiment</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">Main</div>
+            <a class="nav-item active" data-page="home" onclick="navigate('home',this)">
+                <span class="nav-icon">⌂</span> Home
+            </a>
+            <a class="nav-item" data-page="analyze" onclick="navigate('analyze',this)">
+                <span class="nav-icon">◎</span> Analyze
+            </a>
+            <a class="nav-item" data-page="batch" onclick="navigate('batch',this)">
+                <span class="nav-icon">≡</span> Batch
+            </a>
+            <a class="nav-item" data-page="compare" onclick="navigate('compare',this)">
+                <span class="nav-icon">⇄</span> Compare
+            </a>
+            <a class="nav-item" data-page="news" onclick="navigate('news',this)">
+                <span class="nav-icon">◈</span> Live News
+            </a>
+
+            <div class="nav-group-label" style="margin-top:20px;">Research</div>
+            <a class="nav-item" data-page="methodology" onclick="navigate('methodology',this)">
+                <span class="nav-icon">◉</span> Methodology
+            </a>
+            <a class="nav-item" data-page="benchmarks" onclick="navigate('benchmarks',this)">
+                <span class="nav-icon">▦</span> Benchmarks
+            </a>
+            <a class="nav-item" data-page="explainability" onclick="navigate('explainability',this)">
+                <span class="nav-icon">◑</span> Explainability
+            </a>
+
+            <div class="nav-group-label" style="margin-top:20px;">Data</div>
+            <a class="nav-item" data-page="dashboard" onclick="navigate('dashboard',this)">
+                <span class="nav-icon">◫</span> Dashboard
+            </a>
+            <a class="nav-item" data-page="history" onclick="navigate('history',this)">
+                <span class="nav-icon">◷</span> History
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div id="finbert-status-sidebar" class="finbert-pill">
+                <span class="finbert-dot loading"></span>
+                <span id="finbert-pill-text">FinBERT loading…</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- Top bar -->
+        <div class="topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-breadcrumb" id="topbar-breadcrumb">Home</div>
+            <div class="topbar-right">
+                <div class="topbar-stats" id="topbar-stats"></div>
+            </div>
+        </div>
+
+        <!-- ==================== HOME ==================== -->
+        <div class="page active" id="page-home">
+            <div class="page-hero">
+                <div class="hero-kicker">
+                    <span class="hero-kicker-dot"></span>
+                    NLP · Machine Learning · Financial Intelligence
+                </div>
+                <h1 class="page-hero-title">Sentiment Analysis<br>for <span class="grad">Financial Markets</span></h1>
+                <p class="page-hero-desc">An end-to-end NLP pipeline combining Logistic Regression, Naive Bayes, Random Forest, and FinBERT — trained on 9,772 financial headlines with real-time stock correlation and automated news classification.</p>
+                <div class="hero-cta-row">
+                    <button class="btn-primary btn-lg" onclick="navigate('analyze', document.querySelector('[data-page=analyze]'))">Try the Analyzer →</button>
+                    <button class="btn-secondary btn-lg" onclick="navigate('methodology', document.querySelector('[data-page=methodology]'))">View Methodology</button>
+                </div>
+            </div>
+
+            <!-- Key metrics -->
+            <div class="home-metrics" id="home-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="hm-train">—</div>
+                    <div class="metric-label">Training Samples</div>
+                    <div class="metric-sub">Financial headlines</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="hm-acc">—</div>
+                    <div class="metric-label">Best Test Accuracy</div>
+                    <div class="metric-sub">On held-out test set</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">ML Models</div>
+                    <div class="metric-sub">LR · NB · RF · FinBERT</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3</div>
+                    <div class="metric-label">Sentiment Classes</div>
+                    <div class="metric-sub">Positive · Neutral · Negative</div>
+                </div>
+            </div>
+
+            <!-- Feature cards -->
+            <div class="home-features">
+                <div class="feature-card" onclick="navigate('analyze', document.querySelector('[data-page=analyze]'))">
+                    <div class="feature-icon accent">◎</div>
+                    <div class="feature-body">
+                        <h3>Sentiment Analyzer</h3>
+                        <p>Classify any financial headline using a weighted ensemble of 4 models with confidence scores and word-level explainability.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+                <div class="feature-card" onclick="navigate('benchmarks', document.querySelector('[data-page=benchmarks]'))">
+                    <div class="feature-icon green">▦</div>
+                    <div class="feature-body">
+                        <h3>Model Benchmarks</h3>
+                        <p>ROC curves, Precision-Recall curves, confusion matrices, learning curves, and 5-fold cross-validation scores.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+                <div class="feature-card" onclick="navigate('news', document.querySelector('[data-page=news]'))">
+                    <div class="feature-icon blue">◈</div>
+                    <div class="feature-body">
+                        <h3>Live News Feed</h3>
+                        <p>Real-time financial headlines classified automatically every 30 minutes via background pipeline.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+                <div class="feature-card" onclick="navigate('explainability', document.querySelector('[data-page=explainability]'))">
+                    <div class="feature-icon purple">◑</div>
+                    <div class="feature-body">
+                        <h3>Model Explainability</h3>
+                        <p>Explore which words drive predictions using LR coefficients, RF feature importance, and NB log probabilities.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+                <div class="feature-card" onclick="navigate('batch', document.querySelector('[data-page=batch]'))">
+                    <div class="feature-icon yellow">≡</div>
+                    <div class="feature-body">
+                        <h3>Batch Analysis</h3>
+                        <p>Paste multiple headlines or upload a CSV. Export scored results with all model predictions.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+                <div class="feature-card" onclick="navigate('compare', document.querySelector('[data-page=compare]'))">
+                    <div class="feature-icon red">⇄</div>
+                    <div class="feature-body">
+                        <h3>Side-by-Side Compare</h3>
+                        <p>Analyze two headlines simultaneously and compare their sentiment scores across all models.</p>
+                    </div>
+                    <div class="feature-arrow">→</div>
+                </div>
+            </div>
+
+            <!-- Tech stack -->
+            <div class="card" style="margin-top:8px;">
+                <div class="card-label">Tech Stack</div>
+                <div class="tech-stack-row">
+                    <div class="tech-item"><div class="tech-name">Python 3.11</div><div class="tech-role">Runtime</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">Flask</div><div class="tech-role">Web Server</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">scikit-learn</div><div class="tech-role">ML Models</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">FinBERT</div><div class="tech-role">Transformer</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">NLTK</div><div class="tech-role">NLP Preprocessing</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">SQLite</div><div class="tech-role">Persistence</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">yfinance</div><div class="tech-role">Stock Data</div></div>
+                    <div class="tech-sep"></div>
+                    <div class="tech-item"><div class="tech-name">Chart.js</div><div class="tech-role">Visualizations</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ANALYZE ==================== -->
+        <div class="page" id="page-analyze">
+            <div class="page-header">
+                <h1>Sentiment Analyzer</h1>
+                <p>Classify financial text using a weighted ensemble of four ML models.</p>
+            </div>
+
+            <div class="analyze-layout">
+                <div class="input-panel">
+                    <div class="card">
+                        <div class="card-label">Quick Samples</div>
+                        <div class="sample-chips" id="sample-chips"></div>
+                        <textarea id="text-input" style="margin-top:14px;" placeholder="Enter a financial headline or paragraph…"></textarea>
+                        <div class="input-footer">
+                            <span class="hint-text">Shift+Enter for new line · Enter to submit</span>
+                            <button id="analyze-btn" class="btn-primary" onclick="analyzeText()">
+                                <span id="btn-text">Analyze</span>
+                                <span id="btn-spinner" class="spinner hidden"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="feedback-area" class="card hidden">
+                        <div class="card-label">Correct this prediction</div>
+                        <div class="feedback-row">
+                            <button class="feedback-btn fb-positive" onclick="submitFeedback('positive')">● Positive</button>
+                            <button class="feedback-btn fb-neutral"  onclick="submitFeedback('neutral')">● Neutral</button>
+                            <button class="feedback-btn fb-negative" onclick="submitFeedback('negative')">● Negative</button>
+                            <span id="feedback-status" class="feedback-status"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-panel">
+                    <div id="results-skeleton" class="card hidden">
+                        <div class="skeleton-block" style="height:18px;width:140px;margin-bottom:16px;"></div>
+                        <div class="results-grid">
+                            <div class="skeleton-block" style="height:100px;grid-column:1/-1;"></div>
+                            <div class="skeleton-block" style="height:90px;"></div>
+                            <div class="skeleton-block" style="height:90px;"></div>
+                            <div class="skeleton-block" style="height:90px;"></div>
+                        </div>
+                    </div>
+
+                    <div id="results" class="card hidden">
+                        <div class="results-top">
+                            <span class="card-label">Prediction Results</span>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                <div id="lang-badge" class="lang-badge hidden"></div>
+                                <div id="entities-display" class="entities-row"></div>
+                            </div>
+                        </div>
+                        <div id="results-grid" class="results-grid"></div>
+
+                        <div id="explain-section" class="explain-section hidden" style="margin-top:16px;">
+                            <div class="card-label" style="margin-bottom:10px;">Word Contributions</div>
+                            <div id="explain-grid" class="explain-grid"></div>
+                        </div>
+
+                        <div id="stock-section" class="stock-section hidden">
+                            <div class="card-label" style="margin-bottom:10px;">Stock Price — Last 30 Days</div>
+                            <div id="stock-charts" class="stock-charts"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== BATCH ==================== -->
+        <div class="page" id="page-batch">
+            <div class="page-header">
+                <h1>Batch Analysis</h1>
+                <p>Paste multiple headlines or upload a CSV file. Export results with all model scores.</p>
+            </div>
+            <div class="card">
+                <div class="tab-bar" style="margin-bottom:20px;">
+                    <button class="tab active" onclick="switchBatchTab('paste',this)">Paste Text</button>
+                    <button class="tab" onclick="switchBatchTab('upload',this)">Upload CSV</button>
+                </div>
+                <div id="batch-paste">
+                    <textarea id="batch-input" placeholder="One headline per line…" style="min-height:140px;margin-bottom:12px;"></textarea>
+                    <button class="btn-primary" onclick="batchAnalyze()">Analyze All</button>
+                </div>
+                <div id="batch-upload" class="hidden">
+                    <div class="upload-area" id="upload-area" onclick="document.getElementById('csv-file').click()">
+                        <div class="upload-icon">↑</div>
+                        <p>Drop a CSV here or <a href="#" onclick="event.stopPropagation();document.getElementById('csv-file').click();return false;">browse files</a></p>
+                        <p class="sub">Column must be named Sentence, Text, Headline, or Title</p>
+                        <input type="file" id="csv-file" accept=".csv,.tsv" onchange="uploadCSV()" hidden>
+                    </div>
+                </div>
+                <div id="batch-actions" class="batch-actions hidden">
+                    <button class="btn-secondary" onclick="exportCSV()">Export CSV</button>
+                    <span id="batch-count" class="batch-count"></span>
+                </div>
+                <div id="batch-results" class="batch-list hidden"></div>
+            </div>
+        </div>
+
+        <!-- ==================== COMPARE ==================== -->
+        <div class="page" id="page-compare">
+            <div class="page-header">
+                <h1>Compare Texts</h1>
+                <p>Analyze two headlines side by side and compare sentiment scores across all models.</p>
+            </div>
+            <div class="card">
+                <div class="compare-inputs">
+                    <div class="compare-col">
+                        <label>Text A</label>
+                        <textarea id="compare-a" placeholder="First headline…"></textarea>
+                    </div>
+                    <div class="compare-col">
+                        <label>Text B</label>
+                        <textarea id="compare-b" placeholder="Second headline…"></textarea>
+                    </div>
+                </div>
+                <button class="btn-primary" style="margin-top:16px;" onclick="compareTexts()">Compare</button>
+            </div>
+            <div id="compare-results" class="compare-results-row hidden">
+                <div id="compare-a-result" class="compare-result-card"></div>
+                <div class="compare-vs">VS</div>
+                <div id="compare-b-result" class="compare-result-card"></div>
+            </div>
+        </div>
+
+        <!-- ==================== NEWS ==================== -->
+        <div class="page" id="page-news">
+            <div class="page-header">
+                <h1>Live Financial News</h1>
+                <p>Headlines auto-fetched and classified every 30 minutes via background pipeline.</p>
+            </div>
+            <button class="btn-primary" id="news-btn" onclick="fetchNews()">Fetch Latest Headlines</button>
+            <div id="news-results" class="news-list hidden"></div>
+        </div>
+
+        <!-- ==================== METHODOLOGY ==================== -->
+        <div class="page" id="page-methodology">
+            <div class="page-header">
+                <h1>Methodology</h1>
+                <p>A detailed walkthrough of the NLP pipeline, feature engineering, model design, and system architecture.</p>
+            </div>
+
+            <div class="method-grid">
+                <div class="method-card">
+                    <div class="method-num">1</div>
+                    <h3>Data Collection</h3>
+                    <p>Financial headlines labeled positive, negative, or neutral. <strong id="m-train-count">9,772</strong> training and <strong id="m-test-count">2,443</strong> test samples — merged from Financial PhraseBank and Twitter Financial News Sentiment datasets.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">2</div>
+                    <h3>Text Preprocessing</h3>
+                    <p><strong>Tokenization</strong> via NLTK. <strong>Stopword removal</strong> with preserved negation words. <strong>Negation handling:</strong> tokens after "not", "no", "never" receive a <code>NOT_</code> prefix until a clause boundary, flipping their semantic polarity.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">3</div>
+                    <h3>Feature Extraction</h3>
+                    <p><strong>TF-IDF</strong> with sublinear TF, bigrams (1,2-grams), min_df=2, max_df=0.95, 5,000 features. Plus a <strong>Bag-of-Words</strong> CountVectorizer baseline for Naive Bayes comparison.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">4</div>
+                    <h3>Classical Models</h3>
+                    <p>Three classifiers trained independently:</p>
+                    <ul>
+                        <li><strong>Logistic Regression</strong> — interpretable coefficients, TF-IDF</li>
+                        <li><strong>Naive Bayes</strong> — probabilistic baseline, Bag-of-Words</li>
+                        <li><strong>Random Forest</strong> — 100 trees, captures non-linear patterns</li>
+                    </ul>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">5</div>
+                    <h3>FinBERT Transformer</h3>
+                    <p><strong>ProsusAI/finbert</strong> — BERT pre-trained on financial corpora — loads asynchronously and becomes the 4th model with 40% ensemble weight when ready. Understands domain context that bag-of-words models miss.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">6</div>
+                    <h3>Ensemble Prediction</h3>
+                    <p>Weighted probability averaging: LR 35%, RF 30%, NB 20%. With FinBERT active: FinBERT 40%, others rescaled to 60%. Reduces variance and improves generalization over any single model.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">7</div>
+                    <h3>Entity Detection &amp; Stock Correlation</h3>
+                    <p>Regex + dictionary matching identifies 30+ ticker symbols and company names. Detected tickers fetch real-time 30-day price history via <strong>yfinance</strong>, enabling visual correlation between news sentiment and stock performance.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-num">8</div>
+                    <h3>Persistence &amp; Feedback Loop</h3>
+                    <p>All predictions and user corrections stored in <strong>SQLite</strong>. Corrections feed back into model retraining on demand. History enables sentiment trend analysis over time.</p>
+                </div>
+            </div>
+
+            <div class="pipeline-wrap" style="margin-top:8px;">
+                <h3>NLP Pipeline</h3>
+                <div class="pipeline-flow">
+                    <div class="pipe-step">Raw Text</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step">Tokenize</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step">Stopwords + Negation</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step">TF-IDF / BoW</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step hl">LR + NB + RF</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step hl2">+ FinBERT</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step hl">Ensemble</div><div class="pipe-arrow">→</div>
+                    <div class="pipe-step">Sentiment</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== BENCHMARKS ==================== -->
+        <div class="page" id="page-benchmarks">
+            <div class="page-header">
+                <h1>Model Benchmarks</h1>
+                <p>Test accuracy, 5-fold cross-validation, confusion matrices, ROC curves, and learning curves.</p>
+            </div>
+            <div class="stat-row" id="stats-row"></div>
+            <div class="model-grid" id="model-cards"></div>
+            <div class="bench-grid" style="margin-top:24px;">
+                <div class="chart-card">
+                    <h3>ROC Curves <span class="dim">— per class</span></h3>
+                    <div class="tab-bar">
+                        <button class="tab active" onclick="showROC('negative',this)">Negative</button>
+                        <button class="tab" onclick="showROC('neutral',this)">Neutral</button>
+                        <button class="tab" onclick="showROC('positive',this)">Positive</button>
+                    </div>
+                    <canvas id="roc-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Precision-Recall <span class="dim">— per class</span></h3>
+                    <div class="tab-bar">
+                        <button class="tab active" onclick="showPR('negative',this)">Negative</button>
+                        <button class="tab" onclick="showPR('neutral',this)">Neutral</button>
+                        <button class="tab" onclick="showPR('positive',this)">Positive</button>
+                    </div>
+                    <canvas id="pr-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card" style="margin-top:20px;">
+                <h3>Learning Curves <span class="dim">— accuracy vs. training size</span></h3>
+                <canvas id="learning-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- ==================== EXPLAINABILITY ==================== -->
+        <div class="page" id="page-explainability">
+            <div class="page-header">
+                <h1>Model Explainability</h1>
+                <p>Which words and features drive each model's decisions? Global feature importance per sentiment class.</p>
+            </div>
+            <div class="tab-bar">
+                <button class="tab active" onclick="showExplainModel('logistic_regression',this)">Logistic Regression</button>
+                <button class="tab" onclick="showExplainModel('random_forest',this)">Random Forest</button>
+                <button class="tab" onclick="showExplainModel('naive_bayes',this)">Naive Bayes</button>
+            </div>
+            <div id="explain-global" class="explain-global-grid"></div>
+        </div>
+
+        <!-- ==================== DASHBOARD ==================== -->
+        <div class="page" id="page-dashboard">
+            <div class="page-header">
+                <h1>Dataset Dashboard</h1>
+                <p>Distribution of sentiment labels and most frequent words across the training corpus.</p>
+            </div>
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Label Distribution</h3>
+                    <canvas id="dist-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Top Words by Class</h3>
+                    <div class="tab-bar">
+                        <button class="tab active" onclick="showWords('negative',this)">Negative</button>
+                        <button class="tab" onclick="showWords('neutral',this)">Neutral</button>
+                        <button class="tab" onclick="showWords('positive',this)">Positive</button>
+                    </div>
+                    <div id="word-bars"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== HISTORY ==================== -->
+        <div class="page" id="page-history">
+            <div class="page-header">
+                <h1>Prediction History</h1>
+                <p>All predictions stored in SQLite. Sentiment trend aggregated from your session activity.</p>
+            </div>
+            <div class="history-layout">
+                <div class="chart-card">
+                    <h3>Sentiment Trend</h3>
+                    <canvas id="trend-chart"></canvas>
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                        <div class="card-label" style="margin-bottom:12px;">Retrain Model</div>
+                        <div class="retrain-banner">
+                            <p>Feedback corrections: <strong id="feedback-count">0</strong></p>
+                            <button class="btn-secondary" onclick="retrainModels()">Retrain with Feedback</button>
+                            <span id="retrain-status" class="feedback-status"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="card-label" style="margin-bottom:12px;">Recent Predictions</div>
+                    <div id="history-list" class="history-list"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
