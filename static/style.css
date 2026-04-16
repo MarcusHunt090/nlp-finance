@@ -667,9 +667,10 @@ textarea::placeholder { color: var(--text-muted); }
 }
 .news-item:hover { border-color: var(--border2); }
 .news-content { flex: 1; min-width: 0; }
-.news-title { font-size: 0.84rem; font-weight: 500; margin-bottom: 3px; }
+.news-title { font-size: 0.84rem; font-weight: 500; margin-bottom: 3px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 .news-title a { color: var(--text); text-decoration: none; }
 .news-title a:hover { color: var(--accent); }
+.news-snippet { font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 5px; line-height: 1.45; }
 .news-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .news-right { flex-shrink: 0; }
 

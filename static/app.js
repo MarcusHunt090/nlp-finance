@@ -659,7 +659,11 @@ function renderNews(articles, cached) {
     c.innerHTML = cacheNote + articles.map(a => `
         <div class="news-item">
             <div class="news-content">
-                <div class="news-title"><a href="${a.link}" target="_blank" rel="noopener">${a.title}</a></div>
+                <div class="news-title">
+                    <a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>
+                    ${a.analyzed_body ? '<span style="font-size:0.68rem;background:#10b98122;color:#10b981;border-radius:4px;padding:1px 6px;margin-left:6px;font-weight:600">FULL ARTICLE</span>' : ''}
+                </div>
+                ${a.snippet && a.analyzed_body ? `<div class="news-snippet">${a.snippet}</div>` : ''}
                 <div class="news-meta">
                     <span>${a.source}</span>
                     ${(a.entities || []).map(e => `<span class="entity-tag">${e.ticker}</span>`).join('')}

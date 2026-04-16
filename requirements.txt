@@ -10,3 +10,5 @@ yfinance>=0.2.0
 langdetect>=1.0.9
 datasets>=2.14.0
 pytest>=7.4.0
+newspaper3k>=0.2.8
+lxml[html_clean]>=5.0.0

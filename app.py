@@ -450,10 +450,15 @@ def _news_pipeline_thread():
             articles = _fetch_raw_news()
             scored = []
             for a in articles:
-                preds = predict_sentiment(a['title'], trained_models)
+                # Try to fetch full article body; fall back to title
+                body, snippet = _fetch_article_body(a['link'])
+                analysis_text = body if body else a['title']
+                preds = predict_sentiment(analysis_text, trained_models)
                 ents = detect_entities(a['title'])
                 scored.append({
                     **a,
+                    'snippet': snippet or a['title'],
+                    'analyzed_body': bool(body),
                     'sentiment': preds.get('ensemble', {}).get('label', ''),
                     'confidence': preds.get('ensemble', {}).get('confidence', {}),
                     'entities': ents,
@@ -476,6 +481,28 @@ NEWS_FEEDS = [
     'https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL,GOOG,MSFT,AMZN,TSLA&region=US&lang=en-US',
     'https://news.google.com/rss/search?q=stock+market+finance&hl=en-US&gl=US&ceid=US:en',
 ]
+
+
+def _fetch_article_body(url, timeout=8):
+    """
+    Attempt to fetch and extract the full article body from a URL.
+    Returns (body_text, snippet) or (None, None) on failure.
+    """
+    try:
+        from newspaper import Article
+        a = Article(url, request_timeout=timeout)
+        a.download()
+        a.parse()
+        body = a.text.strip()
+        if len(body) < 100:
+            return None, None
+        # Truncate to ~500 words for model input
+        words = body.split()
+        truncated = ' '.join(words[:500])
+        snippet = ' '.join(words[:40]) + ('…' if len(words) > 40 else '')
+        return truncated, snippet
+    except Exception:
+        return None, None
 
 
 def _fetch_raw_news():
