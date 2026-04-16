@@ -401,9 +401,7 @@ textarea::placeholder { color: var(--text-muted); }
 /* ============================================================
    ANALYZE PAGE
    ============================================================ */
-.analyze-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-.input-panel { display: flex; flex-direction: column; gap: 12px; }
-.results-panel { display: flex; flex-direction: column; gap: 12px; }
+#url-input:focus { border-color: var(--accent); outline: none; }
 
 .input-footer {
     display: flex; justify-content: space-between; align-items: center;

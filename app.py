@@ -1155,6 +1155,53 @@ def api_predict():
     })
 
 
+@app.route('/api/analyze-url', methods=['POST'])
+def api_analyze_url():
+    data = request.get_json()
+    url = (data.get('url') or '').strip()
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+
+    body, snippet = _fetch_article_body(url, timeout=12)
+    if not body:
+        return jsonify({'error': 'Could not extract article text. The site may be paywalled or blocking scrapers.'}), 422
+
+    # Also try to get article metadata
+    article_meta = {'title': '', 'authors': [], 'publish_date': '', 'source': ''}
+    try:
+        from newspaper import Article
+        a = Article(url, request_timeout=12)
+        a.download()
+        a.parse()
+        article_meta['title'] = a.title or ''
+        article_meta['authors'] = a.authors or []
+        article_meta['publish_date'] = str(a.publish_date) if a.publish_date else ''
+        article_meta['source'] = a.source_url or ''
+    except Exception:
+        pass
+
+    preds = predict_sentiment(body, trained_models)
+    ents = detect_entities(body)
+    lang = detect_language(body)
+    expls = explain_prediction(body, trained_models)
+
+    db_add_history(url, preds.get('ensemble', {}).get('label', ''), ents)
+
+    return jsonify({
+        'predictions': preds,
+        'entities': ents,
+        'language': lang,
+        'explanations': expls,
+        'finbert_status': finbert_status,
+        'article': {
+            **article_meta,
+            'snippet': snippet,
+            'word_count': len(body.split()),
+            'url': url,
+        }
+    })
+
+
 @app.route('/api/batch', methods=['POST'])
 def api_batch():
     data = request.get_json()

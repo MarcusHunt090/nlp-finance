@@ -344,6 +344,84 @@ function renderInlineExplanation(explanations) {
     }).join('');
 }
 
+function switchAnalyzeTab(tab, el) {
+    document.querySelectorAll('#page-analyze .tab-bar .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('analyze-url-panel').classList.toggle('hidden', tab !== 'url');
+    document.getElementById('analyze-text-panel').classList.toggle('hidden', tab !== 'text');
+    // Hide results when switching tabs
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('results-skeleton').classList.add('hidden');
+    if (document.getElementById('article-meta-card')) {
+        document.getElementById('article-meta-card').classList.add('hidden');
+    }
+}
+
+async function analyzeUrl() {
+    const input = document.getElementById('url-input');
+    const url = input.value.trim();
+    if (!url) return;
+
+    const btn = document.getElementById('url-analyze-btn');
+    const btnText = document.getElementById('url-btn-text');
+    const spinner = document.getElementById('url-btn-spinner');
+    btn.disabled = true;
+    btnText.textContent = 'Fetching Article...';
+    spinner.classList.remove('hidden');
+
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('results-skeleton').classList.remove('hidden');
+    document.getElementById('article-meta-card').classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/analyze-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            document.getElementById('results-skeleton').classList.add('hidden');
+            alert(data.error);
+            return;
+        }
+
+        lastAnalyzedText = url;
+
+        // Show article metadata
+        const meta = data.article;
+        const metaCard = document.getElementById('article-meta-card');
+        const metaContent = document.getElementById('article-meta-content');
+        if (meta) {
+            metaContent.innerHTML = `
+                ${meta.title ? `<div style="font-weight:600;font-size:0.95rem;margin-bottom:6px;">${meta.title}</div>` : ''}
+                ${meta.snippet ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;line-height:1.5;">${meta.snippet}</div>` : ''}
+                <div style="display:flex;gap:14px;font-size:0.72rem;color:var(--text-muted);flex-wrap:wrap;">
+                    ${meta.source ? `<span>Source: ${meta.source}</span>` : ''}
+                    ${meta.word_count ? `<span>${meta.word_count} words analyzed</span>` : ''}
+                    ${meta.publish_date ? `<span>${meta.publish_date.split(' ')[0]}</span>` : ''}
+                </div>`;
+            metaCard.classList.remove('hidden');
+        }
+
+        document.getElementById('results-skeleton').classList.add('hidden');
+        renderResults(data.predictions, data.entities, data.language);
+        renderInlineExplanation(data.explanations);
+        renderStockSection(data.entities || []);
+        loadHistory();
+
+        if (data.finbert_status) updateFinbertBanner(data.finbert_status);
+    } catch (e) {
+        console.error(e);
+        document.getElementById('results-skeleton').classList.add('hidden');
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Analyze Article';
+        spinner.classList.add('hidden');
+    }
+}
+
 // ===================== STOCK CORRELATION =====================
 
 async function renderStockSection(entities) {

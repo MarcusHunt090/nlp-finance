@@ -194,66 +194,95 @@
         <!-- ==================== ANALYZE ==================== -->
         <div class="page" id="page-analyze">
             <div class="page-header">
-                <h1>Sentiment Analyzer</h1>
-                <p>Classify financial text using a weighted ensemble of four ML models.</p>
+                <h1>Article Sentiment Analyzer</h1>
+                <p>Paste a financial article URL for deep analysis, or enter text directly.</p>
             </div>
 
-            <div class="analyze-layout">
-                <div class="input-panel">
-                    <div class="card">
-                        <div class="card-label">Quick Samples</div>
-                        <div class="sample-chips" id="sample-chips"></div>
-                        <textarea id="text-input" style="margin-top:14px;" placeholder="Enter a financial headline or paragraph…"></textarea>
-                        <div class="input-footer">
-                            <span class="hint-text">Shift+Enter for new line · Enter to submit</span>
-                            <button id="analyze-btn" class="btn-primary" onclick="analyzeText()">
-                                <span id="btn-text">Analyze</span>
-                                <span id="btn-spinner" class="spinner hidden"></span>
-                            </button>
-                        </div>
-                    </div>
+            <!-- Input mode tabs -->
+            <div class="tab-bar" style="margin-bottom:20px;">
+                <button class="tab active" id="tab-url" onclick="switchAnalyzeTab('url', this)">Article URL</button>
+                <button class="tab" id="tab-text" onclick="switchAnalyzeTab('text', this)">Paste Text</button>
+            </div>
 
-                    <div id="feedback-area" class="card hidden">
-                        <div class="card-label">Correct this prediction</div>
-                        <div class="feedback-row">
-                            <button class="feedback-btn fb-positive" onclick="submitFeedback('positive')">● Positive</button>
-                            <button class="feedback-btn fb-neutral"  onclick="submitFeedback('neutral')">● Neutral</button>
-                            <button class="feedback-btn fb-negative" onclick="submitFeedback('negative')">● Negative</button>
-                            <span id="feedback-status" class="feedback-status"></span>
-                        </div>
+            <!-- URL input panel -->
+            <div id="analyze-url-panel">
+                <div class="card">
+                    <div class="card-label">Article URL</div>
+                    <div style="display:flex;gap:10px;align-items:stretch;">
+                        <input type="url" id="url-input" placeholder="https://www.reuters.com/..."
+                            style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-size:0.9rem;outline:none;"
+                            onkeydown="if(event.key==='Enter') analyzeUrl()">
+                        <button id="url-analyze-btn" class="btn-primary" onclick="analyzeUrl()">
+                            <span id="url-btn-text">Analyze Article</span>
+                            <span id="url-btn-spinner" class="spinner hidden"></span>
+                        </button>
+                    </div>
+                    <p style="font-size:0.72rem;color:var(--text-muted);margin-top:8px;">Works with Reuters, Bloomberg, CNBC, MarketWatch, Financial Times, and most major financial news sites. Paywalled articles will fall back to headline analysis.</p>
+                </div>
+
+                <!-- Article metadata card (hidden until analysis) -->
+                <div id="article-meta-card" class="card hidden" style="margin-top:12px;">
+                    <div class="card-label">Article</div>
+                    <div id="article-meta-content"></div>
+                </div>
+            </div>
+
+            <!-- Text input panel (hidden by default) -->
+            <div id="analyze-text-panel" class="hidden">
+                <div class="card">
+                    <div class="card-label">Quick Samples</div>
+                    <div class="sample-chips" id="sample-chips"></div>
+                    <textarea id="text-input" style="margin-top:14px;" placeholder="Enter a financial article, headline, or paragraph…"></textarea>
+                    <div class="input-footer">
+                        <span class="hint-text">Shift+Enter for new line · Enter to submit</span>
+                        <button id="analyze-btn" class="btn-primary" onclick="analyzeText()">
+                            <span id="btn-text">Analyze</span>
+                            <span id="btn-spinner" class="spinner hidden"></span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="results-panel">
-                    <div id="results-skeleton" class="card hidden">
-                        <div class="skeleton-block" style="height:18px;width:140px;margin-bottom:16px;"></div>
-                        <div class="results-grid">
-                            <div class="skeleton-block" style="height:100px;grid-column:1/-1;"></div>
-                            <div class="skeleton-block" style="height:90px;"></div>
-                            <div class="skeleton-block" style="height:90px;"></div>
-                            <div class="skeleton-block" style="height:90px;"></div>
+                <div id="feedback-area" class="card hidden">
+                    <div class="card-label">Correct this prediction</div>
+                    <div class="feedback-row">
+                        <button class="feedback-btn fb-positive" onclick="submitFeedback('positive')">● Positive</button>
+                        <button class="feedback-btn fb-neutral"  onclick="submitFeedback('neutral')">● Neutral</button>
+                        <button class="feedback-btn fb-negative" onclick="submitFeedback('negative')">● Negative</button>
+                        <span id="feedback-status" class="feedback-status"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results (shared between both tabs) -->
+            <div style="margin-top:16px;">
+                <div id="results-skeleton" class="card hidden">
+                    <div class="skeleton-block" style="height:18px;width:140px;margin-bottom:16px;"></div>
+                    <div class="results-grid">
+                        <div class="skeleton-block" style="height:100px;grid-column:1/-1;"></div>
+                        <div class="skeleton-block" style="height:90px;"></div>
+                        <div class="skeleton-block" style="height:90px;"></div>
+                        <div class="skeleton-block" style="height:90px;"></div>
+                    </div>
+                </div>
+
+                <div id="results" class="card hidden">
+                    <div class="results-top">
+                        <span class="card-label">Prediction Results</span>
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            <div id="lang-badge" class="lang-badge hidden"></div>
+                            <div id="entities-display" class="entities-row"></div>
                         </div>
                     </div>
+                    <div id="results-grid" class="results-grid"></div>
 
-                    <div id="results" class="card hidden">
-                        <div class="results-top">
-                            <span class="card-label">Prediction Results</span>
-                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                                <div id="lang-badge" class="lang-badge hidden"></div>
-                                <div id="entities-display" class="entities-row"></div>
-                            </div>
-                        </div>
-                        <div id="results-grid" class="results-grid"></div>
+                    <div id="explain-section" class="explain-section hidden" style="margin-top:16px;">
+                        <div class="card-label" style="margin-bottom:10px;">Word Contributions</div>
+                        <div id="explain-grid" class="explain-grid"></div>
+                    </div>
 
-                        <div id="explain-section" class="explain-section hidden" style="margin-top:16px;">
-                            <div class="card-label" style="margin-bottom:10px;">Word Contributions</div>
-                            <div id="explain-grid" class="explain-grid"></div>
-                        </div>
-
-                        <div id="stock-section" class="stock-section hidden">
-                            <div class="card-label" style="margin-bottom:10px;">Stock Price — Last 30 Days</div>
-                            <div id="stock-charts" class="stock-charts"></div>
-                        </div>
+                    <div id="stock-section" class="stock-section hidden">
+                        <div class="card-label" style="margin-bottom:10px;">Stock Price — Last 30 Days</div>
+                        <div id="stock-charts" class="stock-charts"></div>
                     </div>
                 </div>
             </div>
