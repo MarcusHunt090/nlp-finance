@@ -4,7 +4,7 @@
 
 ## Live Demo
 
-[Railway Deployment](https://nlp-finance-production.up.railway.app) <!-- update with actual URL -->
+[🚀 Live Demo](https://nlpfinanceproduction.up.railway.app)
 
 ## What It Does
 
