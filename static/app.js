@@ -1,3 +1,41 @@
+// ===================== TOAST SYSTEM =====================
+function showToast(msg, type = 'info', duration = 4000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ'}</span><span class="toast-msg">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; toast.style.transition = 'all .3s'; setTimeout(() => toast.remove(), 300); }, duration);
+}
+
+// ===================== ANIMATED COUNTERS =====================
+function animateCounter(el, target, suffix = '', duration = 1200) {
+    const start = performance.now();
+    const startVal = 0;
+    function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(startVal + (target - startVal) * eased);
+        el.textContent = current.toLocaleString() + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = target.toLocaleString() + suffix;
+    }
+    requestAnimationFrame(update);
+}
+
+// ===================== ANALYSIS STEPS =====================
+function setStep(id, state) { // state: 'active' | 'done' | ''
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'step-item' + (state ? ' ' + state : '');
+}
+function resetSteps() {
+    ['step-fetch','step-models','step-arc','step-report'].forEach(id => setStep(id, ''));
+}
+
 let appData = null;
 let benchmarkData = null;
 let explainData = null;
@@ -102,6 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const models = data.models || {};
         const bestAcc = Math.max(...Object.values(models).map(m => m.accuracy).filter(Boolean));
         if (ts) ts.innerHTML = `<span class="topbar-stat"><strong>${(data.dataset.train_size||0).toLocaleString()}</strong> samples</span><span class="topbar-stat"><strong>${bestAcc}%</strong> accuracy</span>`;
+        // Animate metric counters
+        const trainEl = document.getElementById('hm-train');
+        const testEl = document.getElementById('hm-test');
+        if (trainEl && data.dataset?.train_size) animateCounter(trainEl, data.dataset.train_size);
+        if (testEl && data.dataset?.test_size) animateCounter(testEl, data.dataset.test_size);
         // render dashboard if already on that tab
         if (currentPage === 'dashboard') { renderDistChart(data.dataset.label_distribution); renderWordBars('negative'); }
     });
@@ -372,6 +415,8 @@ async function analyzeUrl() {
     document.getElementById('results').classList.add('hidden');
     document.getElementById('results-skeleton').classList.remove('hidden');
     document.getElementById('article-meta-card').classList.add('hidden');
+    resetSteps();
+    setStep('step-fetch', 'active');
 
     try {
         const res = await fetch('/api/analyze-url', {
@@ -379,11 +424,14 @@ async function analyzeUrl() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url }),
         });
+        setStep('step-fetch', 'done'); setStep('step-models', 'active');
+        btnText.textContent = 'Analyzing...';
         const data = await res.json();
+        setStep('step-models', 'done'); setStep('step-arc', 'active');
 
         if (data.error) {
             document.getElementById('results-skeleton').classList.add('hidden');
-            alert(data.error);
+            showToast(data.error, 'error');
             return;
         }
 
@@ -411,6 +459,7 @@ async function analyzeUrl() {
         renderStockSection(data.entities || []);
         renderSentenceBreakdown(data.sentence_analysis || []);
         renderSentimentArc(data.sentiment_arc || []);
+        setStep('step-arc', 'done'); setStep('step-report', 'done');
         renderTopics(data.topics || []);
         loadHistory();
 
@@ -818,6 +867,11 @@ function renderSentenceBreakdown(sentences) {
         </div>`).join('');
 }
 
+// ===================== EXPORT REPORT =====================
+function exportReport() {
+    window.print();
+}
+
 // ===================== BATCH =====================
 
 function switchBatchTab(tab, el) {
@@ -842,7 +896,7 @@ async function uploadCSV() {
     const fd = new FormData(); fd.append('file', file);
     const res = await fetch('/api/upload', { method: 'POST', body: fd });
     const data = await res.json();
-    if (data.error) { alert(data.error); return; }
+    if (data.error) { showToast(data.error, 'error'); return; }
     lastBatchResults = data.results;
     renderBatchResults(data.results);
 }
@@ -1024,6 +1078,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const dt = new DataTransfer(); dt.items.add(file);
             document.getElementById('csv-file').files = dt.files;
             uploadCSV();
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+        const isMac = navigator.platform.includes('Mac');
+        const mod = isMac ? e.metaKey : e.ctrlKey;
+        if (mod && e.key === 'Enter') {
+            e.preventDefault();
+            if (currentPage === 'analyze') {
+                const urlPanel = document.getElementById('analyze-url-panel');
+                if (urlPanel && !urlPanel.classList.contains('hidden')) analyzeUrl();
+                else analyzeText();
+            }
         }
     });
 });

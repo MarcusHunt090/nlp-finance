@@ -9,6 +9,8 @@
 </head>
 <body>
 
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
 <!-- ======================================================== APP SHELL -->
 <div class="app-shell">
 
@@ -82,13 +84,14 @@
             <div class="page-hero">
                 <div class="hero-kicker">
                     <span class="hero-kicker-dot"></span>
-                    NLP · Machine Learning · Financial Intelligence
+                    Article Intelligence · 5-Model Ensemble · Real-Time Analysis
                 </div>
-                <h1 class="page-hero-title">Sentiment Analysis<br>for <span class="grad">Financial Markets</span></h1>
-                <p class="page-hero-desc">An end-to-end NLP pipeline combining Logistic Regression, Naive Bayes, Random Forest, and FinBERT — trained on 9,772 financial headlines with real-time stock correlation and automated news classification.</p>
+                <h1 class="page-hero-title">Deep Sentiment Analysis<br>for <span class="grad">Financial Articles</span></h1>
+                <p class="page-hero-desc">Paste any financial article URL for instant deep analysis — sentence-by-sentence breakdown, topic detection, sentiment arc, and a 5-model ML ensemble including FinBERT. Trained on 9,772 financial samples.</p>
                 <div class="hero-cta-row">
                     <button class="btn-primary btn-lg" onclick="navigate('analyze', document.querySelector('[data-page=analyze]'))">Try the Analyzer →</button>
                     <button class="btn-secondary btn-lg" onclick="navigate('methodology', document.querySelector('[data-page=methodology]'))">View Methodology</button>
+                    <a class="btn-secondary btn-lg" href="https://github.com/MarcusHunt090/nlp-finance" target="_blank" rel="noopener">GitHub →</a>
                 </div>
             </div>
 
@@ -195,7 +198,7 @@
         <div class="page" id="page-analyze">
             <div class="page-header">
                 <h1>Article Sentiment Analyzer</h1>
-                <p>Paste a financial article URL for deep analysis, or enter text directly.</p>
+                <p>Paste a financial article URL for deep multi-model analysis, or enter text directly for quick classification.</p>
             </div>
 
             <!-- Input mode tabs -->
@@ -268,14 +271,21 @@
                         <div class="skeleton-block" style="height:90px;"></div>
                         <div class="skeleton-block" style="height:90px;"></div>
                     </div>
+                    <div id="analysis-steps" style="margin-top:16px;display:flex;flex-direction:column;gap:6px;">
+                        <div class="step-item" id="step-fetch"><span class="step-dot"></span><span class="step-label">Fetching article</span></div>
+                        <div class="step-item" id="step-models"><span class="step-dot"></span><span class="step-label">Running ML models</span></div>
+                        <div class="step-item" id="step-arc"><span class="step-dot"></span><span class="step-label">Building sentiment arc</span></div>
+                        <div class="step-item" id="step-report"><span class="step-dot"></span><span class="step-label">Preparing results</span></div>
+                    </div>
                 </div>
 
                 <div id="results" class="card hidden">
-                    <div class="results-top">
+                    <div class="results-top" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                         <span class="card-label">Prediction Results</span>
                         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             <div id="lang-badge" class="lang-badge hidden"></div>
                             <div id="entities-display" class="entities-row"></div>
+                            <button class="btn-secondary" onclick="exportReport()" style="font-size:0.75rem;padding:5px 12px;">⬇ Download Report</button>
                         </div>
                     </div>
                     <div id="results-grid" class="results-grid"></div>
