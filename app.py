@@ -642,6 +642,7 @@ def get_top_words(df, label_str, n=15):
 # ---- Stacking Ensemble ----
 
 # Globals for stacking meta-learner
+models_ready = False
 meta_clf = None
 meta_label_encoder = None
 lm_train_features = None
@@ -1139,40 +1140,14 @@ def predict_sentiment(text, models):
 
 app = Flask(__name__)
 
-print("Initializing database...")
-init_db()
-
-print("Loading data and training models...")
-df_train, df_test = load_data()
-
-# Incorporate feedback into training
-fb_rows = db_get_feedback()
-if fb_rows:
-    fb_df = pd.DataFrame(fb_rows)
-    if 'text' in fb_df.columns and 'label' in fb_df.columns:
-        fb_df = fb_df.rename(columns={'text': 'Sentence', 'label': 'Label'})
-        fb_df = fb_df[fb_df['Label'].isin(LABELS)]
-        if len(fb_df) > 0:
-            # Apply cleaning to feedback data too
-            fb_df['Sentence'] = fb_df['Sentence'].astype(str).apply(clean_text)
-            df_train = pd.concat([df_train, fb_df[['Sentence', 'Label']]], ignore_index=True)
-
-dataset_stats = get_dataset_stats(df_train, df_test)
-trained_models, cv_scores, main_tfidf, train_vect_matrix, train_labels_arr, train_text_list = train_models(df_train)
-
 model_evaluations = {}
-for key, info in trained_models.items():
-    model_evaluations[key] = evaluate_model(info, df_test)
-    model_evaluations[key]['name'] = info['name']
-    if key in cv_scores:
-        model_evaluations[key]['cv'] = cv_scores[key]
-
-top_words = {lbl: get_top_words(df_train, lbl) for lbl in LABELS}
-
-print("Computing benchmarks...")
-benchmark_data = compute_benchmarks(trained_models, df_test)
-learning_curve_data = compute_learning_curves(trained_models, train_text_list, train_labels_arr)
-feature_importance_data = get_feature_importance(trained_models)
+dataset_stats = {}
+top_words = {}
+benchmark_data = {}
+learning_curve_data = {}
+feature_importance_data = {}
+df_train = None
+df_test = None
 
 sample_sentences = [
     "Apple stock surges after strong quarterly earnings beat expectations",
@@ -1183,16 +1158,66 @@ sample_sentences = [
     "Markets remain flat as investors await economic data",
 ]
 
-print("Models trained and ready! Starting background services...")
 
-# Start background services
-start_finbert_loading()
-start_news_pipeline()
+def _init_models_thread():
+    """Background thread: initialize DB, load data, train all models."""
+    global trained_models, cv_scores, main_tfidf, train_vect_matrix, \
+           train_labels_arr, train_text_list, model_evaluations, dataset_stats, \
+           top_words, benchmark_data, learning_curve_data, feature_importance_data, \
+           df_train, df_test, models_ready
 
-print("Server ready!")
+    print("Initializing database...")
+    init_db()
+
+    print("Loading data and training models...")
+    df_train, df_test = load_data()
+
+    # Incorporate feedback into training
+    fb_rows = db_get_feedback()
+    if fb_rows:
+        fb_df = pd.DataFrame(fb_rows)
+        if 'text' in fb_df.columns and 'label' in fb_df.columns:
+            fb_df = fb_df.rename(columns={'text': 'Sentence', 'label': 'Label'})
+            fb_df = fb_df[fb_df['Label'].isin(LABELS)]
+            if len(fb_df) > 0:
+                fb_df['Sentence'] = fb_df['Sentence'].astype(str).apply(clean_text)
+                df_train = pd.concat([df_train, fb_df[['Sentence', 'Label']]], ignore_index=True)
+
+    dataset_stats = get_dataset_stats(df_train, df_test)
+    trained_models, cv_scores, main_tfidf, train_vect_matrix, train_labels_arr, train_text_list = train_models(df_train)
+
+    model_evaluations = {}
+    for key, info in trained_models.items():
+        model_evaluations[key] = evaluate_model(info, df_test)
+        model_evaluations[key]['name'] = info['name']
+        if key in cv_scores:
+            model_evaluations[key]['cv'] = cv_scores[key]
+
+    top_words = {lbl: get_top_words(df_train, lbl) for lbl in LABELS}
+
+    print("Computing benchmarks...")
+    benchmark_data = compute_benchmarks(trained_models, df_test)
+    learning_curve_data = compute_learning_curves(trained_models, train_text_list, train_labels_arr)
+    feature_importance_data = get_feature_importance(trained_models)
+
+    models_ready = True
+    print("Models trained and ready! Starting background services...")
+    start_finbert_loading()
+    start_news_pipeline()
+    print("Server ready!")
+
+
+# Start model training in background so Flask can respond immediately
+_init_thread = threading.Thread(target=_init_models_thread, daemon=True)
+_init_thread.start()
 
 
 # ---- API Routes ----
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok', 'models_ready': models_ready}), 200
+
 
 @app.route('/')
 def index():
@@ -1201,6 +1226,8 @@ def index():
 
 @app.route('/api/stats')
 def api_stats():
+    if not models_ready:
+        return jsonify({'error': 'Models are still loading, please try again in a moment.'}), 503
     return jsonify({
         'dataset': dataset_stats,
         'models': model_evaluations,
@@ -1215,6 +1242,8 @@ def api_stats():
 
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
+    if not models_ready:
+        return jsonify({'error': 'Models are still loading, please try again in a moment.'}), 503
     data = request.get_json()
     text = data.get('text', '').strip()
     if not text:
@@ -1239,6 +1268,8 @@ def api_predict():
 
 @app.route('/api/analyze-url', methods=['POST'])
 def api_analyze_url():
+    if not models_ready:
+        return jsonify({'error': 'Models are still loading, please try again in a moment.'}), 503
     data = request.get_json()
     url = (data.get('url') or '').strip()
     if not url:
@@ -1293,6 +1324,8 @@ def api_analyze_url():
 
 @app.route('/api/batch', methods=['POST'])
 def api_batch():
+    if not models_ready:
+        return jsonify({'error': 'Models are still loading, please try again in a moment.'}), 503
     data = request.get_json()
     texts = data.get('texts', [])
     if not texts:
@@ -1420,6 +1453,8 @@ def api_export():
 
 @app.route('/api/compare', methods=['POST'])
 def api_compare():
+    if not models_ready:
+        return jsonify({'error': 'Models are still loading, please try again in a moment.'}), 503
     data = request.get_json()
     text_a = data.get('text_a', '').strip()
     text_b = data.get('text_b', '').strip()

@@ -20,8 +20,11 @@ COPY . .
 # Ensure data directory exists
 RUN mkdir -p data
 
-EXPOSE 5001
+EXPOSE ${PORT:-5001}
 
 ENV FLASK_ENV=production
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=10 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ.get('PORT','5001') + '/health')" || exit 1
 
 CMD ["python", "app.py"]
