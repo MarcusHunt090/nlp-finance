@@ -225,6 +225,7 @@
                 <div id="article-meta-card" class="card hidden" style="margin-top:12px;">
                     <div class="card-label">Article</div>
                     <div id="article-meta-content"></div>
+                    <div id="article-topics" class="hidden" style="margin-top:10px;"></div>
                 </div>
             </div>
 
@@ -288,6 +289,16 @@
                         <div class="card-label" style="margin-bottom:10px;">Stock Price — Last 30 Days</div>
                         <div id="stock-charts" class="stock-charts"></div>
                     </div>
+
+                        <div id="arc-section" class="hidden" style="margin-top:20px;">
+                            <div class="card-label" style="margin-bottom:10px;">Sentiment Arc — Flow Through Article</div>
+                            <canvas id="arc-chart" height="100"></canvas>
+                        </div>
+
+                        <div id="sentence-section" class="hidden" style="margin-top:20px;">
+                            <div class="card-label" style="margin-bottom:10px;">Sentence-Level Breakdown</div>
+                            <div id="sentence-breakdown"></div>
+                        </div>
                 </div>
             </div>
         </div>

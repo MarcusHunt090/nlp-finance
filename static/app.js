@@ -409,6 +409,9 @@ async function analyzeUrl() {
         renderResults(data.predictions, data.entities, data.language);
         renderInlineExplanation(data.explanations);
         renderStockSection(data.entities || []);
+        renderSentenceBreakdown(data.sentence_analysis || []);
+        renderSentimentArc(data.sentiment_arc || []);
+        renderTopics(data.topics || []);
         loadHistory();
 
         if (data.finbert_status) updateFinbertBanner(data.finbert_status);
@@ -750,6 +753,68 @@ function renderNews(articles, cached) {
             <div class="news-right">
                 <span class="sentiment-badge sentiment-${a.sentiment}">${(a.sentiment || '?').toUpperCase()}</span>
             </div>
+        </div>`).join('');
+}
+
+function renderTopics(topics) {
+    const el = document.getElementById('article-topics');
+    if (!el) return;
+    if (!topics || !topics.length) { el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    el.innerHTML = '<span style="font-size:0.72rem;color:var(--text-muted);margin-right:6px;">Topics:</span>' +
+        topics.map(t => `<span style="display:inline-block;background:var(--accent)22;color:var(--accent);border-radius:4px;padding:2px 8px;font-size:0.72rem;font-weight:600;margin:2px 3px;">${t}</span>`).join('');
+}
+
+let arcChart = null;
+function renderSentimentArc(arc) {
+    const section = document.getElementById('arc-section');
+    const canvas = document.getElementById('arc-chart');
+    if (!section || !canvas || !arc.length) { if(section) section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+
+    const labels = arc.map(a => `Part ${a.chunk}`);
+    const data = arc.map(a => a.score);
+    const colors = arc.map(a => a.label === 'positive' ? '#22c55e' : (a.label === 'negative' ? '#ef4444' : '#eab308'));
+
+    if (arcChart) arcChart.destroy();
+    arcChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Sentiment Score',
+                data,
+                backgroundColor: colors,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => `Score: ${ctx.raw > 0 ? '+' : ''}${ctx.raw.toFixed(2)}` }
+            }},
+            scales: {
+                y: { min: -1, max: 1, grid: { color: '#ffffff11' }, ticks: { color: '#94a3b8', callback: v => v > 0 ? `+${v}` : v } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            }
+        }
+    });
+}
+
+function renderSentenceBreakdown(sentences) {
+    const section = document.getElementById('sentence-section');
+    const container = document.getElementById('sentence-breakdown');
+    if (!section || !container || !sentences.length) { if(section) section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+
+    const BG = { positive: '#22c55e18', negative: '#ef444418', neutral: '#eab30818' };
+    const BORDER = { positive: '#22c55e44', negative: '#ef444444', neutral: '#eab30844' };
+    const TEXT_COLOR = { positive: '#22c55e', negative: '#ef4444', neutral: '#eab308' };
+
+    container.innerHTML = sentences.map(s => `
+        <div style="background:${BG[s.label]};border-left:3px solid ${BORDER[s.label]};border-radius:0 6px 6px 0;padding:8px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start;">
+            <span style="flex-shrink:0;font-size:0.68rem;font-weight:700;color:${TEXT_COLOR[s.label]};padding-top:2px;min-width:52px;">${s.label.toUpperCase()}</span>
+            <span style="font-size:0.82rem;line-height:1.5;color:var(--text);">${s.text}</span>
         </div>`).join('');
 }
 

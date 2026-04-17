@@ -483,6 +483,88 @@ NEWS_FEEDS = [
 ]
 
 
+FINANCIAL_TOPICS = {
+    'Earnings': ['earnings', 'eps', 'profit', 'loss', 'quarterly', 'annual results', 'net income', 'operating income', 'beat expectations', 'missed expectations'],
+    'Revenue': ['revenue', 'sales', 'top-line', 'turnover', 'gross revenue'],
+    'Layoffs': ['layoff', 'layoffs', 'job cuts', 'fired', 'workforce reduction', 'redundanc', 'headcount', 'downsizing', 'restructuring'],
+    'Acquisitions': ['acquisition', 'merger', 'buyout', 'takeover', 'deal', 'acquire', 'acquired', 'purchased', 'bought'],
+    'Guidance': ['guidance', 'forecast', 'outlook', 'projection', 'expects', 'anticipated', 'full-year'],
+    'IPO': ['ipo', 'initial public offering', 'going public', 'listing', 'debut'],
+    'Debt': ['debt', 'bond', 'credit', 'loan', 'interest rate', 'yield', 'default', 'downgrade'],
+    'Dividends': ['dividend', 'payout', 'yield', 'shareholder return', 'buyback', 'repurchase'],
+    'Regulatory': ['sec', 'cftc', 'fda', 'antitrust', 'regulation', 'fine', 'penalty', 'investigation', 'lawsuit', 'settlement'],
+    'Market': ['rally', 'selloff', 'correction', 'bull market', 'bear market', 'volatility', 'market crash', 'all-time high'],
+}
+
+def detect_topics(text):
+    """Detect financial topics mentioned in text. Returns list of topic names."""
+    text_lower = text.lower()
+    found = []
+    for topic, keywords in FINANCIAL_TOPICS.items():
+        if any(kw in text_lower for kw in keywords):
+            found.append(topic)
+    return found
+
+
+def analyze_sentences(text, model_key='logistic_regression'):
+    """
+    Break text into sentences and classify each one.
+    Uses a single fast model (logistic_regression by default) for speed.
+    Returns list of {text, label, positive, neutral, negative} dicts.
+    """
+    import re
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 20][:40]  # cap at 40 sentences
+
+    if not sentences or model_key not in trained_models:
+        return []
+
+    info = trained_models[model_key]
+    vects = info['vectorizer'].transform(sentences)
+    probas = info['model'].predict_proba(vects)
+    classes = list(info['model'].classes_)
+
+    results = []
+    for sent, proba in zip(sentences, probas):
+        conf = {cls: round(float(p) * 100, 1) for cls, p in zip(classes, proba)}
+        label = max(conf, key=conf.get)
+        results.append({
+            'text': sent,
+            'label': label,
+            'positive': conf.get('positive', 0),
+            'neutral': conf.get('neutral', 0),
+            'negative': conf.get('negative', 0),
+        })
+    return results
+
+
+def build_sentiment_arc(sentence_analysis, n_chunks=8):
+    """
+    Group sentence analysis into n_chunks and compute average sentiment score per chunk.
+    Sentiment score: positive=+1, neutral=0, negative=-1, weighted by confidence.
+    Returns list of {chunk, score, label} for the arc chart.
+    """
+    if not sentence_analysis:
+        return []
+
+    chunk_size = max(1, len(sentence_analysis) // n_chunks)
+    arc = []
+    for i in range(0, len(sentence_analysis), chunk_size):
+        chunk = sentence_analysis[i:i + chunk_size]
+        scores = []
+        for s in chunk:
+            score = (s['positive'] - s['negative']) / 100.0
+            scores.append(score)
+        avg = sum(scores) / len(scores)
+        arc.append({
+            'chunk': len(arc) + 1,
+            'score': round(avg, 3),
+            'label': 'positive' if avg > 0.1 else ('negative' if avg < -0.1 else 'neutral'),
+        })
+    return arc
+
+
 def _fetch_article_body(url, timeout=8):
     """
     Attempt to fetch and extract the full article body from a URL.
@@ -1185,6 +1267,10 @@ def api_analyze_url():
     lang = detect_language(body)
     expls = explain_prediction(body, trained_models)
 
+    sentence_analysis = analyze_sentences(body)
+    topics = detect_topics(body)
+    arc = build_sentiment_arc(sentence_analysis)
+
     db_add_history(url, preds.get('ensemble', {}).get('label', ''), ents)
 
     return jsonify({
@@ -1193,6 +1279,9 @@ def api_analyze_url():
         'language': lang,
         'explanations': expls,
         'finbert_status': finbert_status,
+        'sentence_analysis': sentence_analysis,
+        'topics': topics,
+        'sentiment_arc': arc,
         'article': {
             **article_meta,
             'snippet': snippet,
