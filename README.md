@@ -4,7 +4,7 @@
 
 ## Live Demo
 
-[🚀 Live Demo](https://nlpfinanceproduction.up.railway.app)
+[🚀 Live Demo](https://nlpfinance.up.railway.app)
 
 ## What It Does
 
